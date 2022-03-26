@@ -3,18 +3,30 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class bda01 {
 
-	static ArrayList<String> fileNames =  new ArrayList<String>();
-	static HashMap<String, Long> times = new HashMap<String, Long>();
-	static HashMap<String, Long> timesParallel = new HashMap<String, Long>();
+	static int GENERATE_DATA_STEP_SIZE = 10000;
+	static int GENERATE_DATA_START_SIZE = 10000;
+	static int GENERATE_DATA_STOP_SIZE = 1000000;
+	static int GENERATE_DATA_ITERATIONS = 100;
 
+	static ArrayList<String> fileNames =  new ArrayList<String>();
+	static HashMap<String, List<Long>> times = new HashMap<String, List<Long>>();
+	static HashMap<String,  List<Long>> timesParallel = new HashMap<String,  List<Long>>();
+
+	static HashMap<String, List<Long>> averageTimes = new HashMap<String, List<Long>>();
+
+	
 	public static void main(String[] args) {
 		createFiles();
+		prepareMaps();
 		try {
 			processFiles();
 		} catch (NumberFormatException e) {
@@ -32,16 +44,16 @@ public class bda01 {
 		}
 
 		evaluateTimes();
+		generateCSV();
 	}
 
 	//Create files containing varying amounts of random numbers
 	private static void createFiles() {
 		System.out.println("Beginning to Create Files....");
 
-		int stepSize = 100000;
-		int startingSize = 100000;
+
 		try {
-			for(int i = startingSize; i <= 10000000; i += stepSize) {
+			for(int i = GENERATE_DATA_START_SIZE; i <= GENERATE_DATA_STOP_SIZE; i += GENERATE_DATA_STEP_SIZE) {
 				String name =  "dataFiles/randomData" + i + ".txt";
 				createRandomArray(i, name);
 				fileNames.add(name);
@@ -54,27 +66,59 @@ public class bda01 {
 		System.out.println("Finished!");
 	}
 
+	//Fills the maps with the fileNames as keys and empty Lists
+	private static void prepareMaps() {
+		for(String fileName : fileNames){
+			times.put(fileName, new ArrayList<Long>());
+			timesParallel.put(fileName, new ArrayList<Long>());
+			averageTimes.put(fileName, new ArrayList<Long>());
+		}
+	}
 
+	//Measures the times for sorting with and without multithreading
 	private static void processFiles() throws NumberFormatException, IOException, InterruptedException{
 		System.out.println("Processing Data...");
 		for(String file : fileNames) {
 			ArrayList<Integer> arrList = readFile(file);
-			measureAndLogTimes(arrList, file);
+			for(int i = 0; i < GENERATE_DATA_ITERATIONS; i++){
+				measureAndLogTimes(arrList, file);
+			}
 		}
+		buildAverages();
 		System.out.println("Finished\r\n__________________________________________________");
 	}
 
+	//Outputs the times on the console
 	private static void evaluateTimes() {
 		for(String file : fileNames) {
-			System.out.println("Time for " + file.substring(10, file.length() - 4) + " Datapoints");
-			Long time = times.get(file);
-			Long timeParallel = timesParallel.get(file);
+			System.out.println("Time for " + file.substring(20, file.length() - 4) + " Datapoints");
+			Long time = averageTimes.get(file).get(0);
+			Long timeParallel = averageTimes.get(file).get(1);
 			double ratio = (double) time/timeParallel;
 
-			System.out.println("Time: " + time);
-			System.out.println("TimeParallel: " + time);
+			System.out.println("Average Time: " + time);
+			System.out.println("Average TimeParallel: " + timeParallel);
 			System.err.println("Time/TimeParallel: " + ratio);
 			System.err.println("_________________________________________________");
+		}
+	}
+
+	//Generates a CSV with the times inside
+	private static void generateCSV(){
+		String eol = System.getProperty("line.separator");
+
+		try (Writer writer = new FileWriter("timesData.csv")) {
+			writer.append("Anzahl Zeichen;Zeit Normal;Zeit Parallel" + eol);
+  			for (Map.Entry<String, List<Long>> entry : averageTimes.entrySet()) {
+    			writer.append(entry.getKey().substring(20, entry.getKey().length() - 4))
+          		.append(';')
+          		.append(Long.toString(entry.getValue().get(0)))
+				.append(';')
+				.append(Long.toString(entry.getValue().get(1)))
+            	.append(eol);
+ 			}
+		} catch (IOException ex) {
+  			ex.printStackTrace(System.err);
 		}
 	}
 
@@ -96,17 +140,41 @@ public class bda01 {
 	//Measures time in Miliseconds and Logs them to the respected ArrayLists "times" and "timesParallel"
 	private static void measureAndLogTimes(ArrayList<Integer> arrList, String file) throws InterruptedException {
 
-		long start = System.nanoTime();
+		long start = System.currentTimeMillis();
 		sort(arrList, arrList.size());
-		long finish = System.nanoTime();
+		long finish = System.currentTimeMillis();
 		long timeElapsed = finish - start;
-		times.putIfAbsent(file, timeElapsed);
+		List<Long> measuredTimes = times.get(file);
+		measuredTimes.add(timeElapsed);
+		times.put(file, measuredTimes);
 			
-		start = System.nanoTime();
+		start = System.currentTimeMillis();
 		sortParallel(arrList, arrList.size());
-		finish = System.nanoTime();
+		finish = System.currentTimeMillis();
 		timeElapsed = finish - start;
-		timesParallel.putIfAbsent(file, timeElapsed);
+		List<Long> measuredTimesParallel = timesParallel.get(file);
+		measuredTimesParallel.add(timeElapsed);
+		timesParallel.put(file, measuredTimesParallel);
+	}
+
+	//Builds the average times the merge algorithms took
+	private static void buildAverages(){
+		for(String fileName : averageTimes.keySet()){
+
+			Long timeSum = 0L;
+			for(Long time : times.get(fileName)){
+				timeSum += time;
+			}
+
+			Long timeSumParallel = 0L;
+			for(Long time : timesParallel.get(fileName)){
+				timeSumParallel += time;
+			}
+			Long averageTime = timeSum / times.get(fileName).size();
+			Long averageTimeParallel = timeSumParallel / timesParallel.get(fileName).size();
+			averageTimes.get(fileName).add(averageTime);
+			averageTimes.get(fileName).add(averageTimeParallel);
+		}
 	}
 
 	//Creates an Array of random Numbers and writes them as .txt files
