@@ -1,1 +1,2 @@
-rm -rfv dataFiles/*
+
+del dataFiles\*.txt
