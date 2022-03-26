@@ -1,27 +1,21 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Writer;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class bda01 {
+public class Bda01 {
 
 	static int GENERATE_DATA_STEP_SIZE = 10000;
 	static int GENERATE_DATA_START_SIZE = 10000;
 	static int GENERATE_DATA_STOP_SIZE = 1000000;
 	static int GENERATE_DATA_ITERATIONS = 100;
 
-	static ArrayList<String> fileNames =  new ArrayList<String>();
-	static HashMap<String, List<Long>> times = new HashMap<String, List<Long>>();
-	static HashMap<String,  List<Long>> timesParallel = new HashMap<String,  List<Long>>();
-
-	static HashMap<String, List<Long>> averageTimes = new HashMap<String, List<Long>>();
+	static List<String> fileNames =  new ArrayList<String>();
+	static Map<String, List<Long>> times = new HashMap<String, List<Long>>();
+	static Map<String,  List<Long>> timesParallel = new HashMap<String,  List<Long>>();
+	static Map<String, List<Long>> averageTimes = new HashMap<String, List<Long>>();
 
 	
 	public static void main(String[] args) {
@@ -29,15 +23,7 @@ public class bda01 {
 		prepareMaps();
 		try {
 			processFiles();
-		} catch (NumberFormatException e) {
-			System.out.println("ERROR: Wrong number format");
-			e.printStackTrace();
-			System.exit(1);
-		} catch (IOException e) {
-			System.out.println("ERROR: Wrong number format");
-			e.printStackTrace();
-			System.exit(1);
-		} catch (InterruptedException e) {
+		} catch (NumberFormatException | IOException | InterruptedException e) {
 			System.out.println("ERROR: Wrong number format");
 			e.printStackTrace();
 			System.exit(1);
@@ -51,10 +37,16 @@ public class bda01 {
 	private static void createFiles() {
 		System.out.println("Beginning to Create Files....");
 
+		String folderName = "dataFiles";
+		File file = new File(folderName);
+
+		if (!file.exists()) {
+			file.mkdir();
+		}
 
 		try {
 			for(int i = GENERATE_DATA_START_SIZE; i <= GENERATE_DATA_STOP_SIZE; i += GENERATE_DATA_STEP_SIZE) {
-				String name =  "dataFiles/randomData" + i + ".txt";
+				String name =  folderName + File.separator + "randomData" + i + ".txt";
 				createRandomArray(i, name);
 				fileNames.add(name);
 			}
@@ -79,7 +71,7 @@ public class bda01 {
 	private static void processFiles() throws NumberFormatException, IOException, InterruptedException{
 		System.out.println("Processing Data...");
 		for(String file : fileNames) {
-			ArrayList<Integer> arrList = readFile(file);
+			List<Integer> arrList = readFile(file);
 			for(int i = 0; i < GENERATE_DATA_ITERATIONS; i++){
 				measureAndLogTimes(arrList, file);
 			}
@@ -123,11 +115,11 @@ public class bda01 {
 	}
 
 	//Read a file and turn it into an ArrayList
-	private static ArrayList<Integer> readFile(String file) throws NumberFormatException, IOException {
+	private static List<Integer> readFile(String file) throws NumberFormatException, IOException {
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 		String line;
-			
-		ArrayList<Integer> arrList = new ArrayList<Integer>();
+
+		List<Integer> arrList = new ArrayList<Integer>();
 		while((line = bufferedReader.readLine()) != null){
 			arrList.add(Integer.parseInt(line));
 		}
@@ -138,7 +130,7 @@ public class bda01 {
 	}
 
 	//Measures time in Miliseconds and Logs them to the respected ArrayLists "times" and "timesParallel"
-	private static void measureAndLogTimes(ArrayList<Integer> arrList, String file) throws InterruptedException {
+	private static void measureAndLogTimes(List<Integer> arrList, String file) throws InterruptedException {
 
 		long start = System.currentTimeMillis();
 		sort(arrList, arrList.size());
@@ -197,13 +189,13 @@ public class bda01 {
 	}
 	
 	//Splits the List in Half and executes the mergeSort on two threads
-	public static void sortParallel(ArrayList<Integer> a, int n) throws InterruptedException {
+	public static void sortParallel(List<Integer> a, int n) throws InterruptedException {
 		if (n < 2) {
 			return;
 		}
 		int mid = n / 2;
-		ArrayList<Integer> l = new ArrayList<Integer>();
-		ArrayList<Integer> r = new ArrayList<Integer>();
+		List<Integer> l = new ArrayList<Integer>();
+		List<Integer> r = new ArrayList<Integer>();
 
 		for (int i = 0; i < mid; i++) {
 			l.add(i, a.get(i));
@@ -226,13 +218,13 @@ public class bda01 {
 	}
 
 	//Splits the List in Half and recursively Sorts the Array
-	public static void sort(ArrayList<Integer> a, int n) {
+	public static void sort(List<Integer> a, int n) {
 		if (n < 2) {
 			return;
 		}
 		int mid = n / 2;
-		ArrayList<Integer> l = new ArrayList<Integer>();
-		ArrayList<Integer> r = new ArrayList<Integer>();
+		List<Integer> l = new ArrayList<Integer>();
+		List<Integer> r = new ArrayList<Integer>();
 
 		for (int i = 0; i < mid; i++) {
 			l.add(i, a.get(i));
@@ -247,7 +239,7 @@ public class bda01 {
 	}
 
 	//Merges the split halves of the list together in a sorted manner
-	public static void merge(ArrayList<Integer> a, ArrayList<Integer> l, ArrayList<Integer> r, int left, int right) {
+	public static void merge(List<Integer> a, List<Integer> l, List<Integer> r, int left, int right) {
 
 		int i = 0, j = 0, k = 0;
 		while (i < left && j < right) {
