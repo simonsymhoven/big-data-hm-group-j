@@ -1,31 +1,21 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
-public class bda01 {
+public class Bda01 {
 
-	static ArrayList<String> fileNames =  new ArrayList<String>();
-	static HashMap<String, Long> times = new HashMap<String, Long>();
-	static HashMap<String, Long> timesParallel = new HashMap<String, Long>();
+	static List<String> fileNames =  new ArrayList<String>();
+	static Map<String, Long> times = new HashMap<String, Long>();
+	static Map<String, Long> timesParallel = new HashMap<String, Long>();
 
 	public static void main(String[] args) {
 		createFiles();
 		try {
 			processFiles();
-		} catch (NumberFormatException e) {
-			System.out.println("ERROR: Wrong number format");
-			e.printStackTrace();
-			System.exit(1);
-		} catch (IOException e) {
-			System.out.println("ERROR: Wrong number format");
-			e.printStackTrace();
-			System.exit(1);
-		} catch (InterruptedException e) {
+		} catch (NumberFormatException | InterruptedException | IOException e) {
 			System.out.println("ERROR: Wrong number format");
 			e.printStackTrace();
 			System.exit(1);
@@ -58,7 +48,7 @@ public class bda01 {
 	private static void processFiles() throws NumberFormatException, IOException, InterruptedException{
 		System.out.println("Processing Data...");
 		for(String file : fileNames) {
-			ArrayList<Integer> arrList = readFile(file);
+			List<Integer> arrList = readFile(file);
 			measureAndLogTimes(arrList, file);
 		}
 		System.out.println("Finished\r\n__________________________________________________");
@@ -79,11 +69,11 @@ public class bda01 {
 	}
 
 	//Read a file and turn it into an ArrayList
-	private static ArrayList<Integer> readFile(String file) throws NumberFormatException, IOException {
+	private static List<Integer> readFile(String file) throws NumberFormatException, IOException {
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 		String line;
-			
-		ArrayList<Integer> arrList = new ArrayList<Integer>();
+
+		List<Integer> arrList = new ArrayList<Integer>();
 		while((line = bufferedReader.readLine()) != null){
 			arrList.add(Integer.parseInt(line));
 		}
@@ -94,7 +84,7 @@ public class bda01 {
 	}
 
 	//Measures time in Miliseconds and Logs them to the respected ArrayLists "times" and "timesParallel"
-	private static void measureAndLogTimes(ArrayList<Integer> arrList, String file) throws InterruptedException {
+	private static void measureAndLogTimes(List<Integer> arrList, String file) throws InterruptedException {
 
 		long start = System.nanoTime();
 		sort(arrList, arrList.size());
@@ -118,6 +108,8 @@ public class bda01 {
 		}
 		
 		BufferedWriter outputWriter = null;
+		File file = new File(fileName);
+		file.mkdirs();
 		FileWriter fileWriter = new FileWriter(fileName);
 		outputWriter = new BufferedWriter(fileWriter);
 		for (int i = 0; i < arr.length; i++) {
@@ -129,13 +121,13 @@ public class bda01 {
 	}
 	
 	//Splits the List in Half and executes the mergeSort on two threads
-	public static void sortParallel(ArrayList<Integer> a, int n) throws InterruptedException {
+	public static void sortParallel(List<Integer> a, int n) throws InterruptedException {
 		if (n < 2) {
 			return;
 		}
 		int mid = n / 2;
-		ArrayList<Integer> l = new ArrayList<Integer>();
-		ArrayList<Integer> r = new ArrayList<Integer>();
+		List<Integer> l = new ArrayList<Integer>();
+		List<Integer> r = new ArrayList<Integer>();
 
 		for (int i = 0; i < mid; i++) {
 			l.add(i, a.get(i));
@@ -158,13 +150,13 @@ public class bda01 {
 	}
 
 	//Splits the List in Half and recursively Sorts the Array
-	public static void sort(ArrayList<Integer> a, int n) {
+	public static void sort(List<Integer> a, int n) {
 		if (n < 2) {
 			return;
 		}
 		int mid = n / 2;
-		ArrayList<Integer> l = new ArrayList<Integer>();
-		ArrayList<Integer> r = new ArrayList<Integer>();
+		List<Integer> l = new ArrayList<Integer>();
+		List<Integer> r = new ArrayList<Integer>();
 
 		for (int i = 0; i < mid; i++) {
 			l.add(i, a.get(i));
@@ -179,7 +171,7 @@ public class bda01 {
 	}
 
 	//Merges the split halves of the list together in a sorted manner
-	public static void merge(ArrayList<Integer> a, ArrayList<Integer> l, ArrayList<Integer> r, int left, int right) {
+	public static void merge(List<Integer> a, List<Integer> l, List<Integer> r, int left, int right) {
 
 		int i = 0, j = 0, k = 0;
 		while (i < left && j < right) {

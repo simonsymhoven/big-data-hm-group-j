@@ -6,9 +6,14 @@
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
+\usepackage{caption}
 \usepackage{xcolor}
+\usepackage{listings}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\lstset{language=Java}
+
 \begin{document}
 
 \title{Assignment 01: Distributed Sort\\
@@ -38,16 +43,96 @@ simon.symhoven@hm.edu}
 \maketitle
 
 \begin{abstract}
-In this assignment, you will experiment with sorting data in a distributed fashion.
+Der verwendete Quellcode ist in einem GitHub Repository verwaltet \cite{github}.
 \end{abstract}
 
-\section{Introduction}
-This document is a model and instructions for \LaTeX.
-Please observe the conference page limits. 
+\section{Random Data}
+Mit Hilfe der Methode \verb|createFiles()| werden Zufallszahlen erzeugt -- beginnend bei 10.000 Stück. Diese werden auf dem Dateisystem in Form einer Textdatei gespeichert. Jede Runde erhöhen wir die Anzahl der Datenpunkte um 10.000, solange bis die Größe von 1.000.000 Zufallszahlen erreicht ist. Die Ergebnisse der Messungen für die später verwendeten Alogrithmen werden in einer csv-Datei gespeichert. Diese zeichnet die Anzahl der Zufallszahlen, die Zeit für den Merge-Sort, sowie die Zeit für den paralellisierten Merge-Sort auf.
+
+\section{Der Merge-Sort}
+Die Methode \verb|processFiles()| startet den eigentlichen Merge-Sort. Die zuvor erzeugten Textdateien werden in einer Schleife eingelesen und jeweils die beiden Merge-Algorithmen angewendet, die Zeiten gestoppt und anschließen ein Durchschnitt über alle Runden berechnet. 
+Die Methode \verb|sort()| erwartet dabei eine Liste von Zahlen und eine Anzahl der zu sortierenden Zahlen \verb|n|. Ist die \verb|n < 2|, so ist der Basisfall erreicht. Andernfalls wird die Mitte kalkuliert und zwei neue Listen erzeugt, die jeweils die Elemente \verb|0| bis \verb|n/2|, bzw. \verb|n/2| bis \verb|n| enthalten. Nun wir \verb|sort()| rekursiv auf die beiden Listen aufgerufen:
+
+\begin{lstlisting}
+public void sort(List<Integer> a, int n) {
+    if (n < 2) {
+        return;
+    }
+    int mid = n / 2;
+    List<Integer> l = 
+    	new ArrayList<Integer>();
+    List<Integer> r = 
+    	new ArrayList<Integer>();
+
+    for (int i = 0; i < mid; i++) {
+        l.add(i, a.get(i));
+    }
+    for (int i = mid; i < n; i++) {
+        r.add(i - mid, a.get(i));
+    }
+    sort(l, mid);
+    sort(r, n - mid);
+    merge(a, l, r, mid, n - mid);
+}
+\end{lstlisting}
+
+Die sortierten Teillisten werden dann wieder zusammengesetzt:
+
+\begin{lstlisting}
+public void merge(List<Integer> a, 
+	List<Integer> l, List<Integer> r, 
+	int left, int right) 
+{
+    int i = 0, j = 0, k = 0;
+    while (i < left && j < right) {
+        if (l.get(i) <= r.get(j)) {
+            a.set(k++, l.get(i++));
+        } else {
+            a.set(k++, r.get(j++));
+        }
+    }
+    while (i < left) {
+        a.set(k++, l.get(i++));
+    }
+    while (j < right) {
+        a.set(k++, r.get(j++));
+    }
+}
+\end{lstlisting}
+
+\section{Der parallelisierte Merge-Sort}
+Das Sortieren der Teillisten kann parallelisiert werden, in dem die rekursiven Aufrufe auf \verb|sort()| in jeweils einem eigenen Thread ausgeführt werden. Sobald beide Threads beendet sind, wird \verb|merge()| aufgerufen. 
+Dazu wurde die Methode \verb|sort()| angepasst:
+
+\begin{lstlisting}
+public void sortParallel(List<Integer> a, 
+	int n) 
+{
+    // Basisfall pruefen
+    // Teillisten erzeugen
+    
+    Thread t1 = new Thread(() -> {
+	sort(l, mid);
+    });
+    Thread t2 = new Thread(() -> {
+	sort(r, n - mid);
+    });
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+		
+    // Merge    
+}
+\end{lstlisting}
+
+\section{Analyse}
+
+\section{Algorithmus auf verteilten Systemen}
 
 
-%\begin{thebibliography}{00}
-%\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-%\end{thebibliography}
+\begin{thebibliography}{00}
+\bibitem{github} L. J. Foerner, R. Gellner, und S. Symhoven, ``simonsymhoven/big-data-hm-group-j'', GitHub, URL: https://github.com/simonsymhoven/big-data-hm-group-j, März 2022.
+\end{thebibliography}
 
 \end{document}
