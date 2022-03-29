@@ -128,10 +128,11 @@ public void sortParallel(List<Integer> a,
 
 \section{Analyse}
 \includegraphics[width=0.5\textwidth]{figure.jpg}
-Wie zu erwarten hat sich die Ausührungszeit durch die Aufteilung in zwei Threads ungefähr halbiert. 
+Wie erwartet, hat sich die Ausführungszeit durch die Aufteilung in zwei Threads ungefähr halbiert. 
 Im kleineren Bereich ($<0.2*10^5$) ist der Overhead der Threads allerdings größer als der Zeitvorteil durch die Parallelisierung.
-\section{Algorithmus auf verteilten Systemen}
 
+\section{Algorithmus auf verteilten Systemen}
+Können nicht alle Dateien bzw. deren Inhalte auf einem einzigen System gespeichert werden, müssen diese auf mehrere Knoten verteilt werden. Dazu muss die List der Zufallszahlen zunächst zu gleichen Teilen auf alle Knoten verteilt werden. Auf jedem dieser Knoten läuft dann der übliche Merge-Sort Algorithmus. Am Ende werden dann die vorsortierten Listen der jeweiligen Knoten im ZIp-Lock-Verfahren (Reißverschluss) zusammengefügt. Dafür wird das jeweils erste Element der jeweiligen Liste mit den anderen verglichen. Das kleinste wird auf den Speicher des ersten Knoten geschrieben, sofern Platz vorhanden ist, ansonsten auf den nächsten Knoten. Dieses Verfahren wird für jeden Index der Listen wiederholt, bis alle Elemente der Ausgangsliste sortiert und auf mehreren Knoten verteilt ist.
 
 \begin{thebibliography}{00}
 \bibitem{github} L. J. Foerner, R. Gellner, und S. Symhoven, ``simonsymhoven/big-data-hm-group-j'', GitHub, URL: https://github.com/simonsymhoven/big-data-hm-group-j, März 2022.
